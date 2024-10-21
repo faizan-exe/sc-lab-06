@@ -1,11 +1,17 @@
-/* Copyright (c) 2007-2016 MIT 6.005 course staff, all rights reserved.
- * Redistribution of original or derived work requires permission of course staff.
- */
 package twitter;
 
 import java.util.List;
 import java.util.Map;
+import java.awt.geom.GeneralPath;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * SocialNetwork provides methods that operate on a social network.
@@ -41,7 +47,23 @@ public class SocialNetwork {
      *         either authors or @-mentions in the list of tweets.
      */
     public static Map<String, Set<String>> guessFollowsGraph(List<Tweet> tweets) {
-        throw new RuntimeException("not implemented");
+        Map<String, Set<String>> graph = new HashMap<String, Set<String>>();
+        Set<String> mentionsInTweet, followings;
+        String author;
+
+        for(Tweet tweet: tweets) {
+            mentionsInTweet = Extract.getMentionedUsersInTweet(tweet.getText());
+            author = tweet.getAuthor().toLowerCase();
+
+            // Find the people whom the author follows
+            followings = (!graph.containsKey(author)) ? new HashSet<>() : graph.get(author);
+            for(String following: mentionsInTweet) {
+                if (!following.equals(author))
+                    followings.add(following);
+            }
+            graph.put(author, followings);
+        }
+        return graph;
     }
 
     /**
@@ -54,7 +76,28 @@ public class SocialNetwork {
      *         descending order of follower count.
      */
     public static List<String> influencers(Map<String, Set<String>> followsGraph) {
-        throw new RuntimeException("not implemented");
+        List<String> influencers = new ArrayList<>();
+
+        List<Entry<String, Set<String>>> list = new LinkedList(followsGraph.entrySet());
+
+        // Sort the list by passing an anonymous inner comparator class
+        Collections.sort(list, new Comparator<Entry<String, Set<String>>>() {
+            public int compare(Entry<String, Set<String>> o1, Entry<String, Set<String>> o2) {
+                return ((Comparable) o2.getValue().size()).compareTo((Comparable) o1.getValue().size());
+            }
+        });
+
+        Iterator<Entry<String, Set<String>>> iterator = list.iterator();
+        while(iterator.hasNext()) {
+            String influencer = iterator.next().getKey();
+            influencers.add(influencer);
+        }
+
+        return influencers;
     }
 
+    /* Copyright (c) 2007-2016 MIT 6.005 course staff, all rights reserved.
+     * Redistribution of original or derived work requires explicit permission.
+     * Don't post any of this code on the web or to a public Github repository.
+     */
 }
